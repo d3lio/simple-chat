@@ -23,13 +23,10 @@ fn main() {
                 let msg = String::from_utf8(msg).expect("Invalid utf8 message");
                 println!("message recv {:?}", msg);
             },
-            Err(ref err) => match err.kind() {
-                ErrorKind::WouldBlock => (),
-                ErrorKind::UnexpectedEof => break,
-                _ => {
-                    println!("Connection with the server closed");
-                    break;
-                }
+            Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
+            Err(_) => {
+                println!("Connection with the server closed");
+                break;
             }
         }
 
