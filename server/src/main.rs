@@ -49,13 +49,20 @@ fn main() {
             });
         }
 
-        if let Ok(msg) = rx.try_recv() {
+        let recv_result = rx.try_recv().map(|msg| {
+            let mut msg = msg.into_bytes();
+            msg.resize(MESSAGE_SIZE, 0);
+            msg
+        });
+
+        if let Ok(msg) = recv_result {
             // Try to send message from master channel
             clients = clients.into_iter().filter_map(|mut client| {
-                let mut buf = msg.clone().into_bytes();
-                buf.resize(MESSAGE_SIZE, 0);
-
-                client.write_all(&buf).map(|_| client).ok()
+                if client.write_all(&msg).is_ok() {
+                    Some(client)
+                } else {
+                    None
+                }
             }).collect::<Vec<_>>();
         }
 
